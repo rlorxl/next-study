@@ -1,21 +1,38 @@
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { getFilteredEvents } from '../../dummy-data';
 import EventList from '../../components/events/event-list';
 import ResultsTitle from '../../components/events/results-title';
 import Button from '../../components/ui/button';
 import ErrorAlert from '../../components/ui/error-alert';
+import useSWR from 'swr';
 
-const FilteredEventsPage = () => {
+const FilteredEventsPage = (props) => {
+  const [loadedEvents, setLoadedEvents] = useState();
   const router = useRouter();
 
   const filterData = router.query.slug;
 
-  /* useRouter훅은 컴포넌트가 첫 번째 렌더링을 마친 후에 실행된다. 
-  router.query는 데이터에 접근이 되기 전에는 undefined인 상태다.
-  데이터에 접근이 되기 전 상태일 때는 로딩텍스트를 렌더링한다. */
-  if (!filterData) {
+  const { data, error } = useSWR(
+    'https://zoala-next-study-default-rtdb.firebaseio.com/events.json',
+    (url) => fetch(url).then((res) => res.json())
+  );
+
+  useEffect(() => {
+    if (data) {
+      const events = [];
+
+      for (const key in data) {
+        events.push({
+          id: key,
+          ...data[key],
+        });
+      }
+      setLoadedEvents(events);
+    }
+  }, [data]);
+
+  if (!loadedEvents) {
     return <p className='center'>Loading...</p>;
-    // 'center'클래스는 global.css파일에 정의된 css클래스이기 때문에 일반 문자열로 정의한다.
   }
 
   const filteredYear = filterData[0];
@@ -24,14 +41,14 @@ const FilteredEventsPage = () => {
   const numYear = +filteredYear;
   const numMonth = +filteredMonth;
 
-  // url에 수기로 입력했을 때 대안 (numYear, numMonth가 문자열일 때의 경우, 잘못된 날짜경로 입력시)
   if (
     isNaN(numYear) ||
     isNaN(numMonth) ||
     numYear > 2030 ||
     numYear < 2021 ||
     numMonth < 1 ||
-    numMonth > 12
+    numMonth > 12 ||
+    error
   ) {
     return (
       <>
@@ -45,9 +62,12 @@ const FilteredEventsPage = () => {
     );
   }
 
-  const filteredEvents = getFilteredEvents({
-    year: numYear,
-    month: numMonth,
+  const filteredEvents = loadedEvents.filter((event) => {
+    const eventDate = new Date(event.date);
+    return (
+      eventDate.getFullYear() === numYear &&
+      eventDate.getMonth() === numMonth - 1
+    );
   });
 
   if (!filteredEvents || filteredEvents.length === 0) {
@@ -72,5 +92,47 @@ const FilteredEventsPage = () => {
     </>
   );
 };
+
+// export const getServerSideProps = async (context) => {
+//   const { params } = context;
+
+//   const filterData = params.slug;
+
+//   const filteredYear = filterData[0];
+//   const filteredMonth = filterData[1];
+
+//   const numYear = +filteredYear;
+//   const numMonth = +filteredMonth;
+
+//   if (
+//     isNaN(numYear) ||
+//     isNaN(numMonth) ||
+//     numYear > 2030 ||
+//     numYear < 2021 ||
+//     numMonth < 1 ||
+//     numMonth > 12
+//   ) {
+//     return {
+//       props: { hasError: true },
+//       notFound: true,
+//       // redirect: { destination: '/error' },
+//     };
+//   }
+
+//   const filteredEvents = await getFilteredEvents({
+//     year: numYear,
+//     month: numMonth,
+//   });
+
+//   return {
+//     props: {
+//       events: filteredEvents,
+//       date: {
+//         year: numYear,
+//         month: numMonth,
+//       },
+//     },
+//   };
+// };
 
 export default FilteredEventsPage;
