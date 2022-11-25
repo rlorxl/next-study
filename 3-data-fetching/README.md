@@ -145,7 +145,7 @@ export const getStaticProps = async (context) => {
 
 <br/>
 
-### getStaticPath()
+### getStaticPaths()
 
 `export async function getStaticPaths() { ... }`
 
