@@ -6,3 +6,4 @@
 |   2   | [data fetching(pre-rendering)](https://github.com/rlorxl/next-study/tree/main/3-data-fetching) |
 |   3   |                                [Head,meta data & next/image](https://github.com/rlorxl/next-study/tree/main/5-optimization)                                 |
 |4|[api route](https://github.com/rlorxl/next-study/tree/main/6-api-routes)|
+|5|[next-auth](https://github.com/rlorxl/next-study/tree/main/9-authentication)|
